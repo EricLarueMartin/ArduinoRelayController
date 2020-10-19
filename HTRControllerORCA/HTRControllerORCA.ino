@@ -1,9 +1,9 @@
 #include <PID.h> //https://github.com/EricLarueMartin/ArduinioPID
 #include <EEPROM.h>
 #include <avr/wdt.h>
+#include <avr/pgmspace.h>
 #include <CmdMessenger.h> //https://github.com/dreamcat4/cmdmessenger
 #include <Streaming.h>    //http://arduiniana.org/libraries/streaming/
-
 
 const int HTRCycleTime = 8192;
 
@@ -19,9 +19,9 @@ const double Kd = 0.01;
 const double SetPoint = 8.0; // should be about 8 psi
 
 // strings take up memory, so those that occur in multiple places should refer to a global string
-const char PressureMessage[] = {"Measured pressure is "}; 
-const char MilliSecondsMessage[] = {" ms."};
-const char PSIGMessage[] = {" psig."};
+const char PressureMessage[] PROGMEM = {"Measured pressure is "}; 
+const char MilliSecondsMessage[] PROGMEM = {" ms."};
+const char PSIGMessage[] PROGMEM = {" psig."};
 
 const double PowerPeriodInMs = 60.0/1000.0; // 60 Hz in USA 
 
@@ -98,7 +98,7 @@ void parseSerial()
 {
   double fVal;
   int iVal;
-  if (Serial.available()<2) return; // if there's not at least two bytes available there's no valid incoming command
+//  if (Serial.available()<2) return; // if there's not at least two bytes available there's no valid incoming command
   if (Serial.peek()<'?') return; // if the incoming command is less than '?', it's not one of our human readable commands
   switch (Serial.read()) // read the first byte of the incomming data
   {

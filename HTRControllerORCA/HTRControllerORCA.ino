@@ -1,7 +1,6 @@
 #include <PID.h> //https://github.com/EricLarueMartin/ArduinioPID
 #include <EEPROM.h>
 #include <avr/wdt.h>
-#include <avr/pgmspace.h>
 #include <CmdMessenger.h> //https://github.com/dreamcat4/cmdmessenger
 #include <Streaming.h>    //http://arduiniana.org/libraries/streaming/
 
@@ -17,11 +16,6 @@ const double Kp = 0.1;
 const double Ki = 0.01;
 const double Kd = 0.01;
 const double SetPoint = 8.0; // should be about 8 psi
-
-// strings take up memory, so those that occur in multiple places should refer to a global string
-const char PressureMessage[] PROGMEM = {"Measured pressure is "}; 
-const char MilliSecondsMessage[] PROGMEM = {" ms."};
-const char PSIGMessage[] PROGMEM = {" psig."};
 
 const double PowerPeriodInMs = 60.0/1000.0; // 60 Hz in USA 
 
@@ -148,14 +142,14 @@ void parseSerial()
       HTRPID.sampleTime = iVal;
       Serial.print(F("Set heater cycle time to "));
       Serial.print(iVal);
-      Serial.println(MilliSecondsMessage);
+      Serial.println(F(" ms."));
     break;
     case 'L' : // set loop delay
       iVal = Serial.parseInt();
       loopDelay = iVal;
       Serial.print(F("Set loop delay time to "));
       Serial.print(iVal);
-      Serial.println(MilliSecondsMessage);
+      Serial.println(F(" ms."));
     break;
     case 'm' : // set max output
       fVal = Serial.parseFloat();
@@ -216,12 +210,12 @@ void parseSerial()
       Serial.println(power);
       Serial.print(F("Setpoint is "));
       Serial.print(HTRPID.setPoint);
-      Serial.println(PSIGMessage);
+      Serial.println(F(" psig"));
       Serial.print(F("Output range is "));
       Serial.print(HTRPID.outMin);
       Serial.print(F(" to "));
       Serial.print(HTRPID.outMax);
-      Serial.println(PSIGMessage);
+      Serial.println(F(" psig"));
       Serial.print(F("Kp is "));
       Serial.println(HTRPID.Kp);
       Serial.print(F("Ki is "));
@@ -242,10 +236,10 @@ void parseSerial()
       Serial.println(HTRPID.dTerm);
       Serial.print(F("Heater cycle time is "));
       Serial.print(HTRPID.sampleTime);
-      Serial.println(MilliSecondsMessage);
+      Serial.println(F(" ms"));
       Serial.print(F("Loop delay is "));
       Serial.print(loopDelay);
-      Serial.println(MilliSecondsMessage);
+      Serial.println(F(" ms"));
     break;
   }
   
@@ -425,10 +419,10 @@ boolean debouncedDigitalRead(int aPin)
 //--------------------------------------------------------------
 void loop() 
 {
+  wdt_reset(); // reset watchdog timer at start of loop
   parseSerial(); // this will check for human readable command codes, if not found the next line uses the cmdMessenger the Orca sketch uses
   cmdMessenger.feedinSerialData(); //process incoming commands
   scanInputsForChange();
-  wdt_reset(); // reset watchdog timer before measurement
   digitalWrite(PowerLED, HIGH);//Turns on the Green LED 
   // read current pressure
   int iPressureADCValue = analogRead(SensorPin);
@@ -444,14 +438,14 @@ void loop()
     {
       if (humanReadable)
       {
-        Serial.print(PressureMessage);
-        Serial.print(pressure);
-        Serial.println(PSIGMessage);
+        Serial.print(F("Measure pressure is "));
+        Serial.print(HTRPID.lastSample);
+        Serial.println(F(" psig"));
         Serial.print(F("Turning heater on for "));
         Serial.print(windowStopTime);
         Serial.print(F(" out of "));
         Serial.print(HTRPID.sampleTime);
-        Serial.println(MilliSecondsMessage);
+        Serial.println(F(" ms."));
       }
       else
       {
@@ -474,11 +468,7 @@ void loop()
     if ((now > windowStopTime) && heaterOn) 
     {
       if (Serial && humanReadable)
-      {
-        Serial.print(PressureMessage);
-        Serial.print(pressure);
-        Serial.println(F(" turning heater off."));
-      }
+        Serial.println(F("turning heater off."));
       heaterOn = false;
       digitalWrite(HeaterPin, LOW);
       digitalWrite(HeaterLED, LOW); //turn off the Red LED  

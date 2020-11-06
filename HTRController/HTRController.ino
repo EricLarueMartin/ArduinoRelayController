@@ -11,17 +11,14 @@ const int HeaterPin = 9;
 const double Kp = 0.1;
 const double Ki = 0.01;
 const double Kd = 0.01;
-const double SetPoint = 8.0; // should be about 8 psi
-
-// strings take up memory, so those that occur in multiple places should refer to a global string
-const char PressureMessage[] = {"Measured pressure is "}; 
-const char MilliSecondsMessage[] = {" ms."};
-const char PSIGMessage[] = {" psig."};
+const double SetPoint = 8.0; 
 
 const double PowerPeriodInMs = 60.0/1000.0; // 60 Hz in USA 
 
+// manufacturer claims 0.5 V at 0 psig and 4.5 V at 30 psig, ADC is 10 bit with 5 V reference voltage
 double slopeADCtoPSIG = 0.0366569;
 double offsetADCtoPSIG = -1.75;
+
 double pressure;
 double power = 0.0;
 bool heaterOn = false;
@@ -146,14 +143,14 @@ void parseSerial()
       HTRPID.sampleTime = iVal;
       Serial.print(F("Set heater cycle time to "));
       Serial.print(iVal);
-      Serial.println(MilliSecondsMessage);
+      Serial.println(F(" ms."));
     break;
     case 'L' : // set loop delay
       iVal = Serial.parseInt();
       loopDelay = iVal;
       Serial.print(F("Set loop delay time to "));
       Serial.print(iVal);
-      Serial.println(MilliSecondsMessage);
+      Serial.println(F(" ms."));
     break;
     case 'm' : // set max output
       fVal = Serial.parseFloat();
@@ -210,12 +207,12 @@ void parseSerial()
     Serial.println(power);
     Serial.print(F("Setpoint is "));
     Serial.print(HTRPID.setPoint);
-    Serial.println(PSIGMessage);
+    Serial.println(F(" psig"));
     Serial.print(F("Output range is "));
     Serial.print(HTRPID.outMin);
     Serial.print(F(" to "));
     Serial.print(HTRPID.outMax);
-    Serial.println(PSIGMessage);
+    Serial.println(F(" psig."));
     Serial.print(F("Kp is "));
     Serial.println(HTRPID.Kp);
     Serial.print(F("Ki is "));
@@ -236,10 +233,10 @@ void parseSerial()
     Serial.println(HTRPID.dTerm);
     Serial.print(F("Heater cycle time is "));
     Serial.print(HTRPID.sampleTime);
-    Serial.println(MilliSecondsMessage);
+    Serial.println(F(" ms"));
     Serial.print(F("Loop delay is "));
     Serial.print(loopDelay);
-    Serial.println(MilliSecondsMessage);
+    Serial.println(F(" ms"));
   }
   
 }
@@ -261,14 +258,14 @@ void loop()
     if (windowStopTime>HTRPID.sampleTime) windowStopTime = HTRPID.sampleTime;
     if (Serial)
     {
-      Serial.print(PressureMessage);
-      Serial.print(pressure);
-      Serial.println(PSIGMessage);
+      Serial.print(F("Measured pressure is "));
+      Serial.print(HTRPID.lastSample);
+      Serial.println(F(" psig."));
       Serial.print(F("Turning heater on for "));
       Serial.print(windowStopTime);
       Serial.print(F(" out of "));
       Serial.print(HTRPID.sampleTime);
-      Serial.println(MilliSecondsMessage);
+      Serial.println(F(" ms."));
     }
     heaterOn = (windowStopTime > 0);
     digitalWrite(HeaterPin, heaterOn);
@@ -282,11 +279,7 @@ void loop()
     if ((now > windowStopTime) && heaterOn) 
     {
       if (Serial)
-      {
-        Serial.print(PressureMessage);
-        Serial.print(pressure);
-        Serial.println(F(" turning heater off."));
-      }
+        Serial.println(F("Turning heater off."));
       heaterOn = false;
       digitalWrite(HeaterPin, LOW);
       digitalWrite(6, LOW); //turn off the Red LED  
